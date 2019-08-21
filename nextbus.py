@@ -1,27 +1,35 @@
-# v.0.4 Get list of departure times for a given stop, route, and direction
+# v.0.5 Gets the next departure time for a given stop, route, and direction
 
 # Libraries
 import json
 import sys
+import time
 import urllib3
 
 # Constants
+TWENTY_FOUR_HOURS = 60*24*24
 DOTJSON = "?format=json"
 FIRST_USER_ARG = 1
+
 ROUTE = 0
 STOP = 1
 DIRECTION = 2
 
-# API -> JSON returns 'raw_data' as a list of dictionaries
-#    [{'Text': 'University of Minnesota', 'Value': '1'}, {'Text': 'Airport (MAC)', 'Value': '2'}, ...]
-# Filter 'raw_data' into a single dictionary
-#    {'University of Minnesota':'1', 'Airport (MAC)':'2', ...}
+# Filter 'raw_data' into a simple single dictionary
 def DictToList(listOfDicts, text, id):
     newDict = {}
     for dict in listOfDicts:
         newDict[dict[text]] = dict[id]
     return newDict
 
+# Remove extra characters from JSON date format
+def ConvertTimeStamps(timeDict):
+    newDict = {}
+    for timeStamp in timeDict:
+        newDict[timeStamp] = int(timeDict[timeStamp][6:16])
+    return newDict
+
+# UI specs and API assume different input formats. Convert UI to match API
 def FormatDirArg(arg):
     newArg = ""
     if arg == "north":
@@ -35,6 +43,19 @@ def FormatDirArg(arg):
     else:
         newArg = "INVALID"
     return newArg
+
+def GetNextDeparture(departures):
+    current_time = time.time()
+    next_departure = ""
+    next_departure_time = current_time + TWENTY_FOUR_HOURS
+
+    for departure_time in departures:
+        if current_time < departures[departure_time] and departures[departure_time] < next_departure_time:
+            next_departure = departure_time
+            next_departure_time = departures[departure_time]
+        else:
+            continue
+    return next_departure
 
 # Program Execution, keep at end of file
 def Main():
@@ -65,8 +86,12 @@ def Main():
     # Get departures for given stop
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/%s/%s/%s%s" % (chosen_route, chosen_direction, chosen_stop, DOTJSON))
     raw_data = json.loads(response.data.decode('utf-8'))
-    departure_dict = DictToList(raw_data, 'DepartureText', 'DepartureTime')
-    print(departure_dict)
+    departure_dict_raw = DictToList(raw_data, 'DepartureText', 'DepartureTime')
+    departure_dict = ConvertTimeStamps(departure_dict_raw)
+
+    # Get next departure time for given stop
+    next_departure = GetNextDeparture(departure_dict)
+    print(next_departure)
 
     return 0
 
