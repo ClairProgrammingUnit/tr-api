@@ -1,4 +1,4 @@
-# v.0.5 Gets the next departure time for a given stop, route, and direction
+# v.1.0 Gets the time until the next departure from a stop with a given route and direction
 
 # Libraries
 import json
@@ -8,7 +8,7 @@ import urllib3
 
 # Constants
 TWENTY_FOUR_HOURS = 60*24*24
-DOTJSON = "?format=json"
+DOT_JSON = "?format=json"
 FIRST_USER_ARG = 1
 
 ROUTE = 0
@@ -16,33 +16,33 @@ STOP = 1
 DIRECTION = 2
 
 # Filter 'raw_data' into a simple single dictionary
-def DictToList(listOfDicts, text, id):
-    newDict = {}
-    for dict in listOfDicts:
-        newDict[dict[text]] = dict[id]
-    return newDict
+def DictToList(list_of_dicts, text, id):
+    new_dict = {}
+    for dict in list_of_dicts:
+        new_dict[dict[text]] = dict[id]
+    return new_dict
 
 # Remove extra characters from JSON date format
-def ConvertTimeStamps(timeDict):
-    newDict = {}
-    for timeStamp in timeDict:
-        newDict[timeStamp] = int(timeDict[timeStamp][6:16])
-    return newDict
+def Converttimestamps(time_dict):
+    new_dict = {}
+    for timestamp in time_dict:
+        new_dict[timestamp] = int(time_dict[timestamp][6:16])
+    return new_dict
 
 # UI specs and API assume different input formats. Convert UI to match API
 def FormatDirArg(arg):
-    newArg = ""
+    new_arg = ""
     if arg == "north":
-        newArg = "NORTHBOUND"
+        new_arg = "NORTHBOUND"
     elif arg == "east":
-        newArg = "EASTBOUND"
+        new_arg = "EASTBOUND"
     elif arg == "south":
-        newArg = "SOUTHBOUND"
+        new_arg = "SOUTHBOUND"
     elif arg == "west":
-        newArg = "WESTBOUND"
+        new_arg = "WESTBOUND"
     else:
-        newArg = "INVALID"
-    return newArg
+        new_arg = "INVALID"
+    return new_arg
 
 def GetNextDeparture(departures):
     current_time = time.time()
@@ -57,6 +57,12 @@ def GetNextDeparture(departures):
             continue
     return next_departure
 
+def TimeUntilDeparture(departure_time):
+    current_time = time.time()
+    time_remaining = departure_time - current_time
+    minutes_remaining = int(time_remaining / 60)
+    return minutes_remaining
+
 # Program Execution, keep at end of file
 def Main():
     # Setup program info
@@ -66,32 +72,34 @@ def Main():
     args[DIRECTION] = FormatDirArg(args[DIRECTION])
 
     # Get routes
-    response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Routes%s" % DOTJSON)
+    response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Routes%s" % DOT_JSON)
     raw_data = json.loads(response.data.decode('utf-8'))
     route_dict = DictToList(raw_data, 'Description', 'Route')
     chosen_route = route_dict[args[ROUTE]]
 
     # Get directions
-    response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Directions/%s%s" % (chosen_route, DOTJSON))
+    response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Directions/%s%s" % (chosen_route, DOT_JSON))
     raw_data = json.loads(response.data.decode('utf-8'))
     direction_dict = DictToList(raw_data, 'Text', 'Value')
     chosen_direction = direction_dict[args[DIRECTION]]
 
     # Get stops
-    response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Stops/%s/%s%s" % (chosen_route, chosen_direction, DOTJSON))
+    response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Stops/%s/%s%s" % (chosen_route, chosen_direction, DOT_JSON))
     raw_data = json.loads(response.data.decode('utf-8'))
     stop_dict = DictToList(raw_data, 'Text', 'Value')
     chosen_stop = stop_dict[args[STOP]]
 
     # Get departures for given stop
-    response = http.request('GET', "http://svc.metrotransit.org/NexTrip/%s/%s/%s%s" % (chosen_route, chosen_direction, chosen_stop, DOTJSON))
+    response = http.request('GET', "http://svc.metrotransit.org/NexTrip/%s/%s/%s%s" % (chosen_route, chosen_direction, chosen_stop, DOT_JSON))
     raw_data = json.loads(response.data.decode('utf-8'))
     departure_dict_raw = DictToList(raw_data, 'DepartureText', 'DepartureTime')
-    departure_dict = ConvertTimeStamps(departure_dict_raw)
+    departure_dict = Converttimestamps(departure_dict_raw)
 
-    # Get next departure time for given stop
+    # Get next departure time and minutes until it for given stop
     next_departure = GetNextDeparture(departure_dict)
     print(next_departure)
+    time_until_next_departure = TimeUntilDeparture(departure_dict[next_departure])
+    print("%d minutes until next departure" % time_until_next_departure)
 
     return 0
 
