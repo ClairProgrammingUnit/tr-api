@@ -63,31 +63,30 @@ def TimeUntilDeparture(departure_time):
     minutes_remaining = int(time_remaining / 60)
     return minutes_remaining
 
-# Program Execution, keep at end of file
-def Main():
-    # Setup program info
-    args = sys.argv[FIRST_USER_ARG:]
+# Find time remaining until next departure from API call to finish
+def NextBus(ui_route, ui_stop, ui_direction):
+    # Setup program
     http = urllib3.PoolManager()
-
-    args[DIRECTION] = FormatDirArg(args[DIRECTION])
+    ui_direction = FormatDirArg(ui_direction)
 
     # Get routes
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Routes%s" % DOT_JSON)
     raw_data = json.loads(response.data.decode('utf-8'))
     route_dict = DictToList(raw_data, 'Description', 'Route')
-    chosen_route = route_dict[args[ROUTE]]
+    chosen_route = route_dict[ui_route]
+    # chosen_route = route_dict[args[ROUTE]]
 
     # Get directions
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Directions/%s%s" % (chosen_route, DOT_JSON))
     raw_data = json.loads(response.data.decode('utf-8'))
     direction_dict = DictToList(raw_data, 'Text', 'Value')
-    chosen_direction = direction_dict[args[DIRECTION]]
+    chosen_direction = direction_dict[ui_direction]
 
     # Get stops
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Stops/%s/%s%s" % (chosen_route, chosen_direction, DOT_JSON))
     raw_data = json.loads(response.data.decode('utf-8'))
     stop_dict = DictToList(raw_data, 'Text', 'Value')
-    chosen_stop = stop_dict[args[STOP]]
+    chosen_stop = stop_dict[ui_stop]
 
     # Get departures for given stop
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/%s/%s/%s%s" % (chosen_route, chosen_direction, chosen_stop, DOT_JSON))
@@ -99,6 +98,17 @@ def Main():
     next_departure = GetNextDeparture(departure_dict)
     print(next_departure)
     time_until_next_departure = TimeUntilDeparture(departure_dict[next_departure])
+
+    return time_until_next_departure
+
+# Program Execution, keep at end of file
+def Main():
+    args = sys.argv[FIRST_USER_ARG:]
+    route = args[ROUTE]
+    stop = args[STOP]
+    direction = args[DIRECTION]
+
+    time_until_next_departure = NextBus(route, stop, direction)
     print("%d minutes until next departure" % time_until_next_departure)
 
     return 0

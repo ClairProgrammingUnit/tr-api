@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Metro API</title>
+  </head>
+  <body>
+    <h1>Next Bus</h1>
+    <p>Find the time until the next bus!</p>
+    <form action="" method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="submit" name="submit" value="Countdown!">
+    </form>
+  </body>
+</html>
