@@ -33,6 +33,15 @@ def Converttimestamps(time_dict):
         new_dict[timestamp] = int(time_dict[timestamp][6:16])
     return new_dict
 
+def CheckInput(input, dict):
+    if input == "":
+        print("All fields are required")
+    for item in dict:
+        if input == item:
+            return 0
+    print("%s not found in dataset. Please try again with another value")
+    return -1
+
 # UI specs and API assume different input formats. Convert UI to match API
 def FormatDirArg(arg):
     new_arg = ""
