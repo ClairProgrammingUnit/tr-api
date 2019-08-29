@@ -15,6 +15,10 @@ ROUTE = 0
 STOP = 1
 DIRECTION = 2
 
+######################
+##### FORMATTING #####
+######################
+
 # Filter 'raw_data' into a simple single dictionary
 def DictToList(list_of_dicts, text, id):
     new_dict = {}
@@ -44,6 +48,10 @@ def FormatDirArg(arg):
         new_arg = "INVALID"
     return new_arg
 
+########################
+##### GET BUS INFO #####
+########################
+
 def GetNextDeparture(departures):
     current_time = time.time()
     next_departure = ""
@@ -62,6 +70,10 @@ def TimeUntilDeparture(departure_time):
     time_remaining = departure_time - current_time
     minutes_remaining = int(time_remaining / 60)
     return minutes_remaining
+
+############################
+##### MAIN APPLICATION #####
+############################
 
 # Find time remaining until next departure from API call to finish
 def NextBus(ui_route, ui_stop, ui_direction):
@@ -99,7 +111,7 @@ def NextBus(ui_route, ui_stop, ui_direction):
     print(next_departure)
     time_until_next_departure = TimeUntilDeparture(departure_dict[next_departure])
 
-    return time_until_next_departure
+    return ("%d minutes until next departure" % time_until_next_departure)
 
 # Program Execution, keep at end of file
 def Main():
