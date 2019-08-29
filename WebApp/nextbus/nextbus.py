@@ -34,13 +34,10 @@ def Converttimestamps(time_dict):
     return new_dict
 
 def CheckInput(input, dict):
-    if input == "":
-        print("All fields are required")
     for item in dict:
         if input == item:
-            return 0
-    print("%s not found in dataset. Please try again with another value")
-    return -1
+            return False
+    return ("%s not found in dataset. Please try again with another value" % input)
 
 # UI specs and API assume different input formats. Convert UI to match API
 def FormatDirArg(arg):
@@ -94,20 +91,34 @@ def NextBus(ui_route, ui_stop, ui_direction):
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Routes%s" % DOT_JSON)
     raw_data = json.loads(response.data.decode('utf-8'))
     route_dict = DictToList(raw_data, 'Description', 'Route')
-    chosen_route = route_dict[ui_route]
-    # chosen_route = route_dict[args[ROUTE]]
+    # chosen_route = route_dict[ui_route]
+    failedCheck = CheckInput(ui_route, route_dict)
+    if failedCheck == False:
+        chosen_route = route_dict[ui_route]
+    else:
+        return failedCheck
 
     # Get directions
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Directions/%s%s" % (chosen_route, DOT_JSON))
     raw_data = json.loads(response.data.decode('utf-8'))
     direction_dict = DictToList(raw_data, 'Text', 'Value')
-    chosen_direction = direction_dict[ui_direction]
+    # chosen_direction = direction_dict[ui_direction]
+    failedCheck = CheckInput(ui_direction, direction_dict)
+    if failedCheck == False:
+        chosen_direction = direction_dict[ui_direction]
+    else:
+        return failedCheck
 
     # Get stops
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/Stops/%s/%s%s" % (chosen_route, chosen_direction, DOT_JSON))
     raw_data = json.loads(response.data.decode('utf-8'))
     stop_dict = DictToList(raw_data, 'Text', 'Value')
-    chosen_stop = stop_dict[ui_stop]
+    # chosen_stop = stop_dict[ui_stop]
+    failedCheck = CheckInput(ui_stop, stop_dict)
+    if failedCheck == False:
+        chosen_stop = stop_dict[ui_stop]
+    else:
+        return failedCheck
 
     # Get departures for given stop
     response = http.request('GET', "http://svc.metrotransit.org/NexTrip/%s/%s/%s%s" % (chosen_route, chosen_direction, chosen_stop, DOT_JSON))
