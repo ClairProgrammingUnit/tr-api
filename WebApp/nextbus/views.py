@@ -12,7 +12,7 @@ def index(request):
             bus_stop = form.cleaned_data['bus_stop']
             direction = form.cleaned_data['direction']
             time_remaining = NextBus(bus_route, bus_stop, direction)
-            return HttpResponse('<p>%s</p>' % time_remaining)
+            return HttpResponse('<p>%s</p><p><a href="">Back</a></p>' % time_remaining)
 
     else:
         form = BusForm();

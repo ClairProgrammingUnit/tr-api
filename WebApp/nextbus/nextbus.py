@@ -128,7 +128,8 @@ def NextBus(ui_route, ui_stop, ui_direction):
 
     # Get next departure time and minutes until it for given stop
     next_departure = GetNextDeparture(departure_dict)
-    print(next_departure)
+    if len(departure_dict) < 1:
+        return ("No remaining departures found for these parameters")
     time_until_next_departure = TimeUntilDeparture(departure_dict[next_departure])
 
     return ("%d minutes until next departure" % time_until_next_departure)
